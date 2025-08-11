@@ -7,11 +7,22 @@
 
 ## Salida esperada:
 ```bash
-  usuario Ana contrató producto por $50000
-  usuario Ana contrató producto por $80000
-  usuario Ana contrató producto por $136500
+  usuario Catalina Maria Olaechea contrató producto por $10000
+  usuario Emanuela Fernandez contrató producto por $34000
+  usuario Julian Rodriguez contrató producto por $15000
+  Complejo: Ruta 12 Km 5 C.P 3370 Puerto Iguazú, Misiones, Argentina - 4 casas - direcciones:
+  Calle Pioneros 101, Misiones, Argentina
+  Avenida Cataratas 202, Misiones, Argentina
+  Ruta Provincial 12, km 8, Misiones, Argentina
+  Barrio La Selva, Lote 45, Misiones, Argentina
+  600000
+  Paquete: - Vuelo: Destino Colombia - Fechas:(Thu Jul 10 2025 00:00:00 GMT-0300 (hora estándar de Arg
+  entina) - Sun Jul 20 2025 00:00:00 GMT-0300 (hora estándar de Argentina)) - Aereolinea: Avianca     
 ```
-### Comando para instalar dependencias:
+### Comando para compilar el proyecto:
 ```bash
- npm install
+  tsc travelAgency.ts
+```
+```bash
+  node travelAgency.js
 ```

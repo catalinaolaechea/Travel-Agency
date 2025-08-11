@@ -1,194 +1,233 @@
 abstract class Producto {
-  abstract calcularPrecio(): number;
+    abstract obtenerPrecio():number
+    abstract detalles():string
 }
+
+type Estrellas = 1 | 2 | 3 | 4 | 5
 
 class Vuelo extends Producto {
-  constructor(
-    public aerolinea: string,
-    public fechaSalida: Date,
-    private precio: number,
-    public fechaRegreso?: Date
-  ) {
-    super();
-  }
+    protected fechaSalida: Date;
+    protected destino: string;
+    aereolinea: string;
+    precio : number;
+    protected fechaRegreso?: Date;
+    constructor(
+        destino:string,
+        fechaSalida: Date,
+        aereolinea: string,
+        precio : number,
+        fechaRegreso?: Date,
+    ){
+        super();
+        this.destino = destino;
+        this.fechaSalida = fechaSalida;
+        this.aereolinea = aereolinea;
+        this.precio = precio;
+        this.fechaRegreso = fechaRegreso
 
-  calcularPrecio(): number {
-    return this.precio;
-  }
+    }
+    obtenerPrecio(): number {
+        return this.precio
+    }
+    detalles():string{
+        return `Vuelo: Destino ${this.destino} - Fechas:(${this.fechaSalida} - ${this.fechaRegreso ?? "Sin especificar"}) - Aereolinea: ${this.aereolinea}`
+    }
 }
 
-abstract class Alojamiento extends Producto {
-  constructor(
-    public direccion: string,
-    protected noches: number
-  ) {
-    super();
-  }
+abstract class Alojamiento extends Producto{
+    protected cantidadNoches:number;
+    direccion:string;
+    constructor(direccion:string, cantidadNoches:number){
+        super()
+        this.direccion = direccion;
+        this.cantidadNoches = cantidadNoches;
+    }
 }
 
 class Hotel extends Alojamiento {
-  constructor(
-    direccion: string,
-    noches: number,
-    public nombre: string,
-    public estrellas: number
-  ) {
-    super(direccion, noches);
-  }
-
-  calcularPrecio(): number {
-    return this.noches * this.estrellas * 10000;
-  }
+    nombre: string;
+    protected cantidadDeNoches: number;
+    direccion: string;
+    cantidadDeEstrellas : Estrellas;
+    constructor(nombre:string, direccion:string, cantidadEstrellas:Estrellas, noches:number){
+        super(direccion, noches);
+        this.nombre = nombre;
+        this.cantidadDeNoches = noches;
+        this.cantidadDeEstrellas = cantidadEstrellas;
+        this.direccion = direccion;
+    }
+    obtenerPrecio(): number {
+        return 10000 * this.cantidadDeEstrellas * this.cantidadDeNoches
+    }
+    detalles():string{
+        return `Hotel: ${this.nombre} (${this.cantidadDeEstrellas} estrellas) : ( ${this.direccion} ) - ${this.cantidadDeNoches} noches`
+    }
 }
 
-class CasaDepartamento extends Alojamiento {
-  constructor(
-    direccion: string,
-    noches: number,
-    private ambientes: number
-  ) {
-    super(direccion, noches);
-  }
 
-  calcularPrecio(): number {
-    let precioPorNoche = 0;
-    if (this.ambientes === 1) precioPorNoche = 15000;
-    else if (this.ambientes >= 2 && this.ambientes <= 4) precioPorNoche = 30000;
-    else precioPorNoche = 50000;
+class CasaDepartamento extends Alojamiento{
+    direccion:string;
+    protected cantidadDeNoches: number;
+    cantidadAmbientes: number;
+    complejo?: Complejo;
 
-    return this.noches * precioPorNoche;
-  }
+    constructor(direccion:string, cantidadDeNoches , cantidadAmbientes:number, complejo?: Complejo){
+        super(direccion, cantidadDeNoches)
+        this.direccion = direccion;
+        this.cantidadDeNoches= cantidadDeNoches;
+        this.cantidadAmbientes = cantidadAmbientes;
+        this.complejo = complejo
+    }
+    obtenerPrecio(): number {
+        if (this.cantidadAmbientes < 1) {
+            throw new Error("La cantidad de ambientes debe ser al menos 1.");
+        }
+        else if (this.cantidadAmbientes === 1){
+            return this.cantidadDeNoches * 15000
+        }
+        else if(this.cantidadAmbientes > 1 && this.cantidadAmbientes < 5){
+            return this.cantidadDeNoches * 30000 
+        }
+        else return this.cantidadDeNoches * 50000
+    }
+    detalles():string{
+        return `Casa o departamento : ${this.direccion} - ${this.cantidadAmbientes} ambientes - ${this.cantidadDeNoches} noches`
+    }
+    obtenerDireccion():string{
+        return this.direccion;
+    }
 }
 
-class Complejo extends Alojamiento {
-  private casas: CasaDepartamento[];
-
-  constructor(
-    direccion: string,
-    noches: number,
-    casas: CasaDepartamento[]
-  ) {
-    super(direccion, noches);
-    this.casas = casas;
-  }
-
-  calcularPrecio(unidadesAlquiladas: number = 1): number {
-    if (unidadesAlquiladas < 1 || unidadesAlquiladas > this.casas.length) {
-      throw new Error("no es inválida la cantidad de unidades");
+class Complejo extends CasaDepartamento {
+    protected cantidadCasas:CasaDepartamento[];
+    nombreComplejo:string
+    constructor(nombre:string, direccion:string, protected cantidadDeNoches:number, cantidadCasas:CasaDepartamento[] ){
+        super(direccion, cantidadDeNoches, cantidadDeNoches)
+        this.nombreComplejo = nombre;
+        this.cantidadCasas = cantidadCasas;
     }
-
-    if (unidadesAlquiladas === 1) {
-      return this.casas[0].calcularPrecio();
+    obtenerPrecio(unidadesAlquiladas:number = 1):number {
+        if (unidadesAlquiladas < 1 || unidadesAlquiladas > this.cantidadCasas.length) {
+            throw new Error("no se especifica un numero valido")
+        }
+     
+        else{
+            const descuentoPorUnidad = 0.1
+            const descuentoTotal = Math.min(this.cantidadCasas.length*descuentoPorUnidad , 0.5)
+            let precioTotal = 0;
+            for (let i = 0; i < unidadesAlquiladas; i++) {
+                precioTotal += this.cantidadCasas[i].obtenerPrecio()
+            }
+            return precioTotal * (1- descuentoTotal )
+        }
+    } 
+    obtenerDireccion():string{
+        return this.cantidadCasas.map(casa => casa.direccion).join('\n')
     }
-
-    let precioTotal = 0;
-    for (let i = 0; i < unidadesAlquiladas; i++) {
-      precioTotal += this.casas[i].calcularPrecio();
+    detalles():string{
+        return `Complejo: ${this.direccion} - ${this.cantidadCasas.length} casas - direcciones:\n${this.obtenerDireccion()}`
     }
-
-    if (unidadesAlquiladas === this.casas.length) {
-      const descuentoPorUnidad = 0.1;
-      const descuentoTotal = Math.min(unidadesAlquiladas * descuentoPorUnidad, 0.5);
-      precioTotal *= (1 - descuentoTotal);
-    }
-
-    return precioTotal;
-  }
+   
 }
 
 class Paquete extends Producto {
-  private productos: Producto[] = [];
-
-  agregarProducto(producto: Producto) {
-    this.productos.push(producto);
-  }
-
-  calcularPrecio(): number {
-    return this.productos.reduce((sum, p) => sum + p.calcularPrecio(), 0);
-  }
+    constructor(protected productos:Producto[]){
+        super()
+    }
+    agregarProducto(producto:Producto):void{
+        this.productos.push(producto)
+    }
+    eliminarProductos(producto:Producto):void{
+        this.productos = this.productos.filter(p => p !== producto)
+    }
+    obtenerPrecio(): number {
+       return this.productos.reduce((acc, producto) => acc + producto.obtenerPrecio(), 0)
+    }
+    detalles():string{
+        const detallesProductos = this.productos.map(p => {
+            return `- ${p.detalles()}`
+        }).join('\n')
+        return `Paquete: ${detallesProductos}`
+    }
 }
 
-class Usuario {
-  private historial: Producto[] = [];
 
-  constructor(
-    public nombre: string,
-    private presupuesto: number
-  ) {}
-
-  contratar(producto: Producto, unidadesAlquiladas: number = 1) {
-    let precio: number;
-
-    if (producto instanceof Complejo) {
-      precio = producto.calcularPrecio(unidadesAlquiladas);
-    } else {
-      precio = producto.calcularPrecio();
+class Usuario{
+    nombre:string;
+    presupuesto:number;
+    historial:Producto[] = [];
+    constructor(nombre:string, presupuesto:number){
+        this.nombre = nombre;
+        this.presupuesto = presupuesto;
     }
-
-    if (this.presupuesto >= precio) {
-      this.presupuesto -= precio;
-      this.historial.push(producto);
-      console.log(`usuario ${this.nombre} contrató producto por $${precio}`);
-    } else {
-      console.log(`${this.nombre} no tiene suficiente presupuesto. Precio alojamiento: $${precio}, disponible: $${this.presupuesto}`);
-    }
-  }
-
-  productosQuePodríaComprar(productos: Producto[]): Producto[] {
-    return productos.filter(p => {
-      try {
-        let precio: number;
-
-        if (p instanceof Complejo) {
-          precio = p.calcularPrecio(1); 
-        } else {
-          precio = p.calcularPrecio();
+    contratar(producto:Producto, unidadesAlquiladas:number = 1){
+        let precio:number
+        if(producto instanceof Complejo){
+            precio = producto.obtenerPrecio(unidadesAlquiladas)
         }
-
-        return precio <= this.presupuesto;
-      } catch {
-        return false;
-      }
-    });
-  }
-
-  getHistorial(): Producto[] {
-    return this.historial;
-  }
-
-  getPresupuesto(): number {
-    return this.presupuesto;
-  }
-
-  cantidadProductos(): number {
-    return this.historial.length;
-  }
+        else{
+            precio = producto.obtenerPrecio();
+        }
+        if(this.presupuesto >= precio){
+            this.historial.push(producto);
+            this.presupuesto = this.presupuesto - precio
+            console.log(`usuario ${this.nombre} contrató producto por $${precio}`);
+        }
+        else{
+            `${this.nombre}, usted no tiene suficiente presupuesto para contratar ${producto.detalles()} x ${unidadesAlquiladas} unidad(es)`;
+        }
+    }
+    mostrarHistorial(){
+        if(this.historial.length === 0){
+            return `El usuario no ha realizado contrataciones a servicios`
+        }else{
+           const detallesProductos = this.historial.map(p => {
+                return `- ${p.detalles()}`
+            }).join('\n')
+            return `Paquete: ${detallesProductos}` 
+        }
+        
+    } //toString para que sea legible para el usuario final, sino se muestra en forma objeto y lo será.
 }
 
-function ordenarUsuariosPorCantidadDeProductos(usuarios: Usuario[]): Usuario[] {
-  return usuarios.slice().sort((a, b) => b.cantidadProductos() - a.cantidadProductos());
+function ordenarUsuarios(usuarios:Usuario[]):Usuario[]{
+    const listaOrdenada = usuarios.sort((p1, p2)=>{
+        return p1.historial.length - p2.historial.length
+    })
+    return listaOrdenada;
 }
 
-//-------test asociados--------
-function runTests(){
-  const vuelo = new Vuelo("Aerolíneas Argentinas", new Date(), 50000, new Date());
-  const hotel = new Hotel("Calle Hotel", 2, "Hotel Bueno", 4); // 80.000
-  const casa = new CasaDepartamento("Calle Casa", 3, 3); // 90.000
-  const monoambiente = new CasaDepartamento("Mono", 1, 1); // 15.000
-  const complejo = new Complejo("Complejo Sur", 2, [monoambiente, casa, casa]);
+//test
+let hotel1 = new Hotel('Kimpton EPIC Hotel','270 Biscayne Boulevard Way, Miami, FL 33131',4,7);
+let vuelo1 = new Vuelo('Miami',new Date(2025,5,3), 'Aereolinas Argentinas', 20000, new Date(2025,5,20));
+const casa1 = new CasaDepartamento("Calle Pioneros 101, Misiones, Argentina", 5, 2);
+const casa2 = new CasaDepartamento("Avenida Cataratas 202, Misiones, Argentina", 7, 3);
+const casa3 = new CasaDepartamento("Ruta Provincial 12, km 8, Misiones, Argentina", 4, 4);
+const casa4 = new CasaDepartamento("Barrio La Selva, Lote 45, Misiones, Argentina", 6, 1);
+let departamento1 = new CasaDepartamento('1649 23rd St, Sarasota, FL 34234, EE. UU.',10,2);
+let vuelo2 = new Vuelo('Chile', new Date(2025,7,4),'LATAM airlines', 10000);
+let vuelo4 = new Vuelo('Colombia', new Date(2025, 6, 10), 'Avianca', 15000, new Date(2025, 6, 20));
+let vuelo6 = new Vuelo('México', new Date(2025, 10, 5), 'Aeroméxico', 19000, new Date(2025, 10, 15));
+let comboDespejar = new Paquete([vuelo1, hotel1,departamento1]);
+let comboViajes = new Paquete([vuelo4, vuelo6]);
 
-  const usuario = new Usuario("Ana", 300000);
-  const usuario2 = new Usuario("Juan", 10000);
+let complejo = new Complejo('Complejo Americano', 'Ruta 12 Km 5 C.P 3370 Puerto Iguazú, Misiones, Argentina', 5, [casa1, casa2, casa3, casa4]);
 
-  usuario.contratar(vuelo);
-  usuario.contratar(hotel);
-  usuario.contratar(complejo, 3);
+let user1 = new Usuario('Julian Rodriguez',300000,);
+let user2 = new Usuario('Catalina Maria Olaechea',900000);
+let user3 = new Usuario('Emanuela Fernandez', 760507);
 
-  console.assert(usuario.getHistorial().length === 3, "Ana debería tener 3 productos");
-  console.assert(usuario2.getHistorial().length === 0, "Juan no debería haber comprado");
 
-  const ordenados = ordenarUsuariosPorCantidadDeProductos([usuario2, usuario]);
-  console.assert(ordenados[0] === usuario, "Ana debería estar primera en el ranking");
-}
+user1.contratar(comboDespejar);
+user2.contratar(vuelo2);
+user3.contratar(comboViajes);
+user1.contratar(vuelo4);
 
-runTests();
+let direccionesComplejoAmericano = complejo.detalles();
+
+console.log(direccionesComplejoAmericano);
+
+let usuariosOrdenados= ordenarUsuarios([user1,user2,user3]);
+
+console.log(comboDespejar.obtenerPrecio());
+console.log(user1.mostrarHistorial());
